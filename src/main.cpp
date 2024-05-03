@@ -62,17 +62,12 @@ int readFromFile()
 			cerr<<"Error reading file."<<endl<<"Exiting...";
 			exit(1);
 		}
-	string line;
-	while (getline(readFile,line)) 
+    string n;
+    int q;
+    double p;
+	while (readFile >> n >> q >> p) 
 	{
-		stringstream s(line);
         VendingMachineSlot temp;
-        string n;
-        int q;
-        double p;
-		getline(s,n,',');
-		s >> p;
-		s >> q;
         temp.setName(n);
         temp.setPrice(p);
         temp.setQuantity(q);
@@ -89,7 +84,7 @@ void writeToFile(int stackPtr)
    	writeFile.open("Vending Machine Data.txt");
     for (int i = 0; i < slot.size(); i++)
     {
-   		writeFile << slot[i].getName() << ","<< slot[i].getPrice() << "," << slot[i].getQuantity() << endl;
+   		writeFile << slot[i].getName() << endl << slot[i].getPrice() << endl << slot[i].getQuantity() << endl;
 	}
 	writeFile.close();
 	cout<<endl;
