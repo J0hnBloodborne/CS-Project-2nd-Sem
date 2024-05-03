@@ -43,7 +43,7 @@ void writeToFile(int stackPtr)
    	writeFile.open("Vending Machine Data.txt");
     for (int i = 0; i < stackPtr - 1; i++)
     {
-   		writeFile << item.name[i] << endl<< item.price[i] << endl << item.quantity[i] << endl;
+   		writeFile << item.name[i] << ","<< item.price[i] << "," << static_cast<int>(item.quantity[i]) << endl;
 	}
 	writeFile.close();
 	cout<<endl;
