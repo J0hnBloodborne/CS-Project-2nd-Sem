@@ -24,8 +24,13 @@ int readFromFile()
 			cerr<<"Error reading file."<<endl<<"Exiting...";
 			exit(1);
 		}
-	while (readFile >> item.name[end-1] >> item.price[end-1]>> item.quantity[end-1]) 
+	string line;
+	while (getline(readFile,line)) 
 	{
+		stringstream ss(line);
+		getline(ss,item.name[end-1],',');
+		ss >> item.price[end-1];
+		ss >> item.quantity[end-1];
 		end += 1;
 	}
 	readFile.close();
