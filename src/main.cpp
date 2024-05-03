@@ -2,7 +2,8 @@
 #include<fstream>
 #include<vector>
 #include<cstdlib>
-#include<string>
+#include<sstream>
+#include<cstdio>
 using namespace std;
 class VendingMachineSlot:
 {
@@ -64,14 +65,14 @@ int readFromFile()
 	string line;
 	while (getline(readFile,line)) 
 	{
-		stringstream ss(line);
+		stringstream s(line);
         VendingMachineSlot temp;
         string n;
         int q;
         double p;
-		getline(ss,n,',');
-		ss >> p;
-		ss >> q;
+		getline(s,n,',');
+		s >> p;
+		s >> q;
         temp.setName(n);
         temp.setPrice(p);
         temp.setQuantity(q);
@@ -80,6 +81,18 @@ int readFromFile()
 	}
 	readFile.close();
 	return end;
+}
+void writeToFile(int stackPtr)
+{
+	int x = remove("Vending Machine Data.txt");
+	ofstream writeFile;
+   	writeFile.open("Vending Machine Data.txt");
+    for (int i = 0; i < slot.size(); i++)
+    {
+   		writeFile << slot[i].getName() << ","<< slot[i].getPrice() << "," << slot[i].getQuantity() << endl;
+	}
+	writeFile.close();
+	cout<<endl;
 }
 int main()
 {
