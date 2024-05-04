@@ -312,7 +312,7 @@ void MaintenanceMode()
 	}
 	while (exitflag = false);
 }
-void UserMode()
+int UserMode()
 {
 	cout<<"----------------"<<endl<<"VENDING MACHINE"<<endl<<"----------------"<<endl;	
 	readFromFile();
@@ -322,17 +322,17 @@ void UserMode()
 	}
 	else
 	{
-		for (int i = 1; i < slot.size(); i++)
-	{
-		cout<<setw(2)<<setfill('0')<<i<<" "<<slot[i-1].getName()<<" - $"<<slot[i-1].getPrice()<<"\t|\t";
-		if (i % 3== 0) cout<<endl;
-	}
+		for (int i = 1; i <= slot.size(); i++)
+		{
+			cout<<setw(2)<<setfill('0')<<i<<" "<<slot[i-1].getName()<<" - $"<<slot[i-1].getPrice()<<"\t|\t";
+			if (i % 3== 0) cout<<endl;
+		}
 	int id;
 	cout<<"Enter item id: ";cin>>id;
 	if (id > slot.size() || id < 1)
 	{
 		cout<<"Empty or Invalid ID."<<endl;
-		exit(1);
+		return -1;
 	}
 	else
 	{
@@ -372,6 +372,6 @@ int main()
 		cout<<"Enter any number to start (0 to exit): ";cin>>Code;
 		if (Code == 177013) MaintenanceMode();
 		else if (Code == 0) break;
-		else UserMode();
+		else int x = UserMode();
 	}
 }
