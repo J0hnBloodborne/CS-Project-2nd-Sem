@@ -24,8 +24,11 @@ int readFromFile()
 			cerr<<"Error reading file."<<endl<<"Exiting...";
 			exit(1);
 		}
-	while (readFile >> item.name[end-1] >> item.price[end-1]>> item.quantity[end-1]) 
+	while (!readFile.eof()) 
 	{
+		cin.ignore();
+		getline(readFile,item.name[end-1]);
+		readFile >> item.price[end-1] >> item.quantity[end-1];
 		end += 1;
 	}
 	readFile.close();
@@ -50,6 +53,7 @@ void MaintenanceMode()
 	cout<<"----------------"<<endl<<"MAINTENANCE MODE"<<endl<<"----------------"<<endl;
 	do
 	{
+		cin.ignore();
 		cout<<"1. Restock\n2. Restock Single Item\n3. Stock new item\nEnter any other value to exit\nEnter choice: ";cin>>choice;
 		switch(choice)
 		{
@@ -300,17 +304,7 @@ void UserMode()
 int main()
 {
 	initializeStructure();
-	ofstream writeFile;
-    writeFile.open("Vending Machine Data.txt");
-	if (!writeFile.is_open())
- 	{
-		cout<<"Error reading file/ file does not exist.";
-	}
-	else
-	{
-		cout<<"Loaded Vending Machine data."<<endl;
-	}
-	writeFile.close();
+	cout<<"Loaded Vending Machine data."<<endl;
 	int Code = 1;
 	while (Code!=0)
 	{
