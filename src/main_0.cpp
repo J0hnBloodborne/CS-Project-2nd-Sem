@@ -4,7 +4,7 @@
 #include<cstdlib>
 #include<cstdio>
 #include<iomanip>
-#include<raylib.h>
+// #include<raylib.h>
 #include<windows.h>
 using namespace std;
 class VendingMachineSlot
@@ -57,6 +57,10 @@ class VendingMachineSlot
         {
             quantity += x;
         }
+        void operator -=(int x)
+        {
+            quantity -= x;
+        }
 };
 vector<VendingMachineSlot> slot;
 void readFromFile()
@@ -90,6 +94,7 @@ void writeToFile()
    		writeFile << slot[i].getName() << endl << slot[i].getPrice() << endl << slot[i].getQuantity() << endl;
 	}
 	writeFile.close();
+	slot.clear();
 	cout<<endl;
 }
 void MaintenanceMode()
@@ -131,9 +136,15 @@ void MaintenanceMode()
 				}
 				else
 				{
-					for (int i = 1; i <  24; i++)
+					vector<VendingMachineSlot>::iterator i = slot.begin();
+					int j = 1;
+					while(i!=slot.end())
 					{
-						cout<<setw(2)<<setfill('0')<<i<<" "<<slot[i-1].getName()<<" - $"<<slot[i-1].getPrice()<<"  Quantity: "<<slot[i-1].getQuantity()<<endl;
+						// cout<<"iteration "<<j;
+						cout<<setw(2)<<setfill('0')<<j<<" "<<(*i).getName()<<" - $"<<(*i).getPrice()<<"  Quantity: "<<(*i).getQuantity()<<endl;
+						i++;
+						if(i==slot.end()) break;
+						j++;
 					}
 					int id,qty;
 					cout<<"Enter item id to restock: ";cin>>id;
@@ -207,8 +218,9 @@ void MaintenanceMode()
 					double price;
 					int qty;
 					bool alreadyExists = false;
-					cout<<"Enter name: ";cin.ignore();
+					cout<<"Enter name: ";
 					getline(cin,name);
+					cin.ignore();
 					for (int i = 0; i < slot.size(); i++)
 					{
 						if (name == slot[i].getName())
@@ -300,8 +312,66 @@ void MaintenanceMode()
 	}
 	while (exitflag = false);
 }
+void UserMode()
+{
+	cout<<"----------------"<<endl<<"VENDING MACHINE"<<endl<<"----------------"<<endl;	
+	readFromFile();
+	if (slot.empty())
+	{
+		cout<<"Vending machine empty."<<endl;
+	}
+	else
+	{
+		for (int i = 1; i < slot.size(); i++)
+	{
+		cout<<setw(2)<<setfill('0')<<i<<" "<<slot[i-1].getName()<<" - $"<<slot[i-1].getPrice()<<"\t|\t";
+		if (i % 3== 0) cout<<endl;
+	}
+	int id;
+	cout<<"Enter item id: ";cin>>id;
+	if (id > slot.size() || id < 1)
+	{
+		cout<<"Empty or Invalid ID."<<endl;
+		exit(1);
+	}
+	else
+	{
+		char cancel;
+		cout<<"Are you sure you want "<<slot[id-1].getName()<<" costing $"<<slot[id-1].getPrice()<<" (y/n)?: ";cin>>cancel;
+		if (cancel != 'y') 
+		{
+			system("CLS");
+			UserMode();	
+		}
+		else
+		{
+			cout<<"Enter money.\t";
+			Sleep(1000);
+			cout<<"Money entered."<<endl;
+			cout<<"You purchased "<<slot[id-1].getName();
+			Sleep(1500);
+			slot[id-1] -= 1;
+			if (slot[id-1].getQuantity() == 0)
+			{
+                vector<VendingMachineSlot>::iterator x = slot.begin() + (id-1);
+				slot.erase(x);
+			}
+			writeToFile();
+			system("CLS");
+		}
+	}
+	}
+}
 
 int main()
 {
-    return 0;
+    cout<<"Loaded Vending Machine data."<<endl;
+	int Code = 1;
+	while (Code!=0)
+	{
+		cout<<"Enter any number to start (0 to exit): ";cin>>Code;
+		if (Code == 177013) MaintenanceMode();
+		else if (Code == 0) break;
+		else UserMode();
+	}
 }
