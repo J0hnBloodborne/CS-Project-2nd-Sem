@@ -1,376 +1,329 @@
-#include<iostream>
-#include<fstream>
-#include<string>
-#include<vector>
-#include<cstdlib>
-#include<cstdio>
-#include<iomanip>
-#include<windows.h>
-using namespace std;
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <iomanip>
+
+class Button
+{
+private:
+    sf::RectangleShape shape;
+    sf::Text text;
+
+public:
+    Button(sf::Font& font, const std::string& buttonText, unsigned int textSize, const sf::Vector2f& size, const sf::Vector2f& position)
+    {
+        shape.setSize(size);
+        shape.setPosition(position);
+        shape.setFillColor(sf::Color::White);
+        shape.setOutlineThickness(2);
+        shape.setOutlineColor(sf::Color::Black);
+
+        text.setString(buttonText);
+        text.setFont(font);
+        text.setCharacterSize(textSize);
+        text.setFillColor(sf::Color::Black);
+
+        sf::FloatRect textRect = text.getLocalBounds();
+        text.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+        text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+    }
+
+    bool contains(const sf::Vector2f& point) const
+    {
+        return shape.getGlobalBounds().contains(point);
+    }
+
+    void draw(sf::RenderWindow& window)
+    {
+        window.draw(shape);
+        window.draw(text);
+    }
+};
+
 class VendingMachineSlot
 {
 private:
-	string name;
-	int quantity;
-	double price;
+    std::string name;
+    int quantity;
+    double price;
+
 public:
-	// static int slotCount;
-	VendingMachineSlot()
-	{
-		name = "Empty";
-		quantity = 0;
-		price = 0.0;
-		// slotCount++;
-	}
-	VendingMachineSlot(string name, int quantity, double price)
-	{
-		this->name = name;
-		this->quantity = quantity;
-		this->price = price;
-		// slotCount++;
-	}
-	string getName()
-	{
-		return name;
-	}
-	int getQuantity()
-	{
-		return quantity;
-	}
-	double getPrice()
-	{
-		return price;
-	}
-	void setName(string name)
-	{
-		this->name = name;
-	}
-	void setQuantity(int quantity)
-	{
-		this->quantity = quantity;
-	}
-	void setPrice(double price)
-	{
-		this->price = price;
-	}
-	void operator +=(int x)
-	{
-		quantity += x;
-	}
-	void operator -=(int x)
-	{
-		quantity -= x;
-	}
+    VendingMachineSlot()
+    {
+        name = "Empty";
+        quantity = 0;
+        price = 0.0;
+    }
+
+    VendingMachineSlot(std::string name, int quantity, double price)
+    {
+        this->name = name;
+        this->quantity = quantity;
+        this->price = price;
+    }
+
+    std::string getName() const
+    {
+        return name;
+    }
+
+    int getQuantity() const
+    {
+        return quantity;
+    }
+
+    double getPrice() const
+    {
+        return price;
+    }
+
+    void setName(const std::string& name)
+    {
+        this->name = name;
+    }
+
+    void setQuantity(int quantity)
+    {
+        this->quantity = quantity;
+    }
+
+    void setPrice(double price)
+    {
+        this->price = price;
+    }
+
+    void operator+=(int x)
+    {
+        quantity += x;
+    }
+
+    void operator-=(int x)
+    {
+        quantity -= x;
+    }
 };
-vector<VendingMachineSlot> slot;
+
+std::vector<VendingMachineSlot> slot;
+std::string selectedItemId = "";
+
 void readFromFile()
 {
-	ifstream readFile("Vending Machine Data.txt");
-	if (!readFile.is_open())
-	{
-		cerr << "Error reading file." << endl << "Exiting...";
-		exit(1);
-	}
-	string n;
-	int q;
-	double p;
-	while (readFile >> n >> p >> q)
-	{
-		VendingMachineSlot temp;
-		temp.setName(n);
-		temp.setPrice(p);
-		temp.setQuantity(q);
-		slot.push_back(temp);
-	}
-	readFile.close();
+    std::ifstream readFile("Vending Machine Data.txt");
+    if (!readFile.is_open())
+    {
+        std::cerr << "Error reading file." << std::endl << "Exiting...";
+        exit(1);
+    }
+
+    slot.clear();
+
+    std::string n;
+    int q;
+    double p;
+    while (readFile >> n >> p >> q)
+    {
+        VendingMachineSlot temp;
+        temp.setName(n);
+        temp.setPrice(p);
+        temp.setQuantity(q);
+        slot.push_back(temp);
+    }
+
+    readFile.close();
 }
+
 void writeToFile()
 {
-	int x = remove("Vending Machine Data.txt");
-	ofstream writeFile;
-	writeFile.open("Vending Machine Data.txt");
-	for (int i = 0; i < slot.size(); i++)
-	{
-		writeFile << slot[i].getName() << endl << slot[i].getPrice() << endl << slot[i].getQuantity() << endl;
-	}
-	writeFile.close();
-	slot.clear();
-	cout << endl;
+    std::ofstream writeFile;
+    writeFile.open("Vending Machine Data.txt");
+    for (int i = 0; i < slot.size(); i++)
+    {
+        writeFile << slot[i].getName() << std::endl << slot[i].getPrice() << std::endl << slot[i].getQuantity() << std::endl;
+    }
+
+    writeFile.close();
 }
-void MaintenanceMode()
+
+void UserMode()
 {
-	int choice;
-	bool exitflag = false;
-	cout << "----------------" << endl << "MAINTENANCE MODE" << endl << "----------------" << endl;
-	do
-	{
-		cin.ignore();
-		cout << "1. Restock\n2. Restock Single Item\n3. Stock new item\nEnter any other value to exit\nEnter choice: "; cin >> choice;
-		switch (choice)
-		{
-		case 1:
-		{
-			readFromFile();
-			if (slot.empty())
-			{
-				cout << "Nothing to restock." << endl;
-				break;
-			}
-			else
-			{
-				for (int i = 0; i < slot.size(); i++)
-				{
-					slot[i].setQuantity(10);
-				}
-				writeToFile();
-			}
-			break;
-		}
-		case 2:
-		{
-			readFromFile();
-			if (slot.empty())
-			{
-				cout << "Nothing to restock." << endl;
-				break;
-			}
-			else
-			{
-				vector<VendingMachineSlot>::iterator i = slot.begin();
-				int j = 1;
-				while (i != slot.end())
-				{
-					// cout<<"iteration "<<j;
-					cout << setw(2) << setfill('0') << j << " " << (*i).getName() << " - $" << (*i).getPrice() << "  Quantity: " << (*i).getQuantity() << endl;
-					i++;
-					if (i == slot.end()) break;
-					j++;
-				}
-				int id, qty;
-				cout << "Enter item id to restock: "; cin >> id;
-				if (id > slot.size() || id < 1)
-				{
-					cout << "Empty or Invalid ID." << endl;
-					break;
-				}
-				cout << "How much would you like to restock: "; cin >> qty;
-				if (qty > 10 - slot[id - 1].getQuantity())
-				{
-					cout << "You cannot put more than 10 items in one slot. Moving to empty slots." << endl;
-					if (slot.size() >= 24)
-					{
-						cout << "Not enough space in vending machine." << endl;
-						break;
-					}
-					else
-					{
-						int freeSlots = 24 - slot.size();
-						cout << freeSlots + 1 << " available. Max free capacity = " << (freeSlots * 10 + 10 - slot[id - 1].getQuantity()) << endl << "Enter quantity again: "; cin >> qty;
-						if (qty > (freeSlots * 10 + 10 - slot[id - 1].getQuantity()))
-						{
-							cout << "Not enough space in vending machine." << endl;
-							break;
-						}
-						else
-						{
-							while (qty > 10 && freeSlots != 0)
-							{
-								string n;
-								int q;
-								double p;
-								q = 10;
-								n = slot[id - 1].getName();
-								p = slot[id - 1].getPrice();
-								qty -= 10;
-								VendingMachineSlot temp(n, p, q);
-								slot.push_back(temp);
-								vector<VendingMachineSlot>::iterator end = slot.end();
-								(*end).setQuantity(qty);
-								freeSlots -= 1;
-							}
-						}
-					}
-				}
-				else if (qty < 1)
-				{
-					cout << "Invalid input." << endl;
-					break;
-				}
-				else
-				{
-					slot[id - 1] += qty;
-				}
-				writeToFile();
-				break;
-			}
-		}
-		case 3:
-		{
-			readFromFile();
-			int freeSlots = 24 - slot.size();
-			if (freeSlots == 0)
-			{
-				cout << "No more space in vending machine.";
-			}
-			else
-			{
-				string name;
-				double price;
-				int qty;
-				bool alreadyExists = false;
-				cout << "Enter name: ";
-				getline(cin, name);
-				cin.ignore();
-				for (int i = 0; i < slot.size(); i++)
-				{
-					if (name == slot[i].getName())
-					{
-						alreadyExists = true;
-						break;
-					}
-				}
-				if (alreadyExists)
-				{
-					cout << "Item already in vending machine. Use restock option.";
-					break;
-				}
-				vector<VendingMachineSlot>::iterator end = slot.end();
-				(*end).setName(name);
-				cout << "Enter price: "; cin >> price;
-				if (price < 0.01)
-				{
-					cout << "Invalid input.";
-					break;
-				}
-				else
-				{
-					(*end).setPrice(price);
-				}
-				cout << "Enter quantity: "; cin >> qty;
-				if (qty > 10)
-				{
-					cout << "You cannot put more than 10 items in one slot. Moving to empty slots.";
-					if (slot.size() == 24)
-					{
-						cout << "Not enough space in vending machine." << endl;
-						(*end).setName("Empty");
-						(*end).setPrice(0);
-						break;
-					}
-					else
-					{
-						int freeSlots = 24 - slot.size();
-						cout << freeSlots + 1 << " slots available. Max free capacity = " << freeSlots * 10 + 10 - (*end).getQuantity() << endl << "Enter quantity again: "; cin >> qty;
-						if (qty > freeSlots * 10)
-						{
-							cout << "Not enough space in vending machine." << endl;
-							(*end).setName("Empty");
-							(*end).setPrice(0);
-							break;
-						}
-						else
-						{
-							while (qty > 10 && freeSlots != 0)
-							{
-								end = slot.end();
-								(*end).setQuantity(10);
-								(*end).setName(name);
-								(*end).setPrice(price);
-								VendingMachineSlot temp("Empty", 0, 0);
-								slot.push_back(temp);
-								qty -= 10;
-								freeSlots -= 1;
-							}
-							VendingMachineSlot temp(name, qty, price);
-							slot.push_back(temp);
-						}
-					}
-				}
-				else if (qty < 1)
-				{
-					cout << "Invalid Input." << endl;
-					break;
-				}
-				else
-				{
-					(*end) += qty;
-				}
-				writeToFile();
-				break;
-			}
-			break;
-		}
-		default:
-		{
-			cout << "Exiting Maintenance Mode." << endl;
-			Sleep(1000);
-			system("CLS");
-			exitflag = true;
-			break;
-		}
-		}
-	} while (exitflag = false);
-}
-int UserMode()
-{
-	cout << "----------------" << endl << "VENDING MACHINE" << endl << "----------------" << endl;
-	readFromFile();
-	if (slot.empty())
-	{
-		cout << "Vending machine empty." << endl;
-	}
-	else
-	{
-		for (int i = 1; i <= slot.size(); i++)
-		{
-			cout << setw(2) << setfill('0') << i << " " << slot[i - 1].getName() << " - $" << slot[i - 1].getPrice() << "\t|\t";
-			if (i % 3 == 0) cout << endl;
-		}
-		int id;
-		cout << "Enter item id: "; cin >> id;
-		if (id > slot.size() || id < 1)
-		{
-			cout << "Empty or Invalid ID." << endl;
-			return -1;
-		}
-		else
-		{
-			char cancel;
-			cout << "Are you sure you want " << slot[id - 1].getName() << " costing $" << slot[id - 1].getPrice() << " (y/n)?: "; cin >> cancel;
-			if (cancel != 'y')
-			{
-				system("CLS");
-				UserMode();
-			}
-			else
-			{
-				cout << "Enter money.\t";
-				Sleep(1000);
-				cout << "Money entered." << endl;
-				cout << "You purchased " << slot[id - 1].getName();
-				Sleep(1500);
-				slot[id - 1] -= 1;
-				if (slot[id - 1].getQuantity() == 0)
-				{
-					vector<VendingMachineSlot>::iterator x = slot.begin() + (id - 1);
-					slot.erase(x);
-				}
-				writeToFile();
-				system("CLS");
-			}
-		}
-	}
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Vending Machine");
+
+    sf::Font font;
+    if (!font.loadFromFile("game_over.ttf")) {
+        std::cerr << "Error loading font." << std::endl;
+        return;
+    }
+
+    readFromFile();
+
+    sf::Text title("VENDING MACHINE", font, 48);
+    title.setPosition(200, 50);
+    title.setFillColor(sf::Color::Green);
+
+    sf::RectangleShape itemGrid(sf::Vector2f(400, 400));
+    itemGrid.setPosition(50, 100);
+    itemGrid.setFillColor(sf::Color(100, 100, 100));
+
+    const int rows = 3;
+    const int cols = 3;
+    std::vector<sf::Text> itemTexts;
+    int itemWidth = itemGrid.getSize().x / cols;
+    int itemHeight = itemGrid.getSize().y / rows;
+    for (int i = 0; i < slot.size(); i++)
+    {
+        std::string itemInfo = std::to_string(i + 1) + " " + slot[i].getName() + " ($" + std::to_string(slot[i].getPrice()) + ")";
+        sf::Text item(itemInfo, font, 24);
+        item.setPosition(50 + (i % cols) * itemWidth, 100 + (i / cols) * itemHeight);
+        item.setFillColor(sf::Color::White);
+        itemTexts.push_back(item);
+    }
+
+    sf::Text prompt("Select item ID:", font, 30);
+    prompt.setPosition(100, 520);
+    prompt.setFillColor(sf::Color::Yellow);
+
+    sf::Text selectedId("", font, 30);
+    selectedId.setPosition(350, 520);
+    selectedId.setFillColor(sf::Color::Red);
+
+    sf::RectangleShape numpadGrid(sf::Vector2f(300, 300));
+    numpadGrid.setPosition(500, 100);
+    numpadGrid.setFillColor(sf::Color(150, 150, 150));
+
+    std::vector<Button> numpadButtons;
+    int buttonSize = 80;
+    int buttonPadding = 10;
+    for (int i = 1; i <= 9; i++)
+    {
+        int col = (i - 1) % 3;
+        int row = (i - 1) / 3;
+        sf::Vector2f buttonPos(500 + col * (buttonSize + buttonPadding), 100 + row * (buttonSize + buttonPadding));
+        Button button(font, std::to_string(i), 24, sf::Vector2f(buttonSize, buttonSize), buttonPos);
+        numpadButtons.push_back(button);
+    }
+
+    sf::Vector2f zeroButtonPos(500 + buttonSize + buttonPadding, 100 + 3 * (buttonSize + buttonPadding));
+    Button button0(font, "0", 24, sf::Vector2f(buttonSize, buttonSize), zeroButtonPos);
+
+    sf::Vector2f purchaseButtonPos(600, 500);
+    Button purchaseButton(font, "PURCHASE", 30, sf::Vector2f(150, 50), purchaseButtonPos);
+
+    while (window.isOpen())
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    for (int i = 0; i < numpadButtons.size(); i++)
+                    {
+                        if (numpadButtons[i].contains(sf::Vector2f(mousePos)))
+                        {
+                            selectedItemId += std::to_string(i + 1);
+                            selectedId.setString(selectedItemId);
+                            break;
+                        }
+                    }
+
+                    if (button0.contains(sf::Vector2f(mousePos)))
+                    {
+                        selectedItemId += "0";
+                        selectedId.setString(selectedItemId);
+                    }
+
+                    if (purchaseButton.contains(sf::Vector2f(mousePos)))
+                    {
+                        int id = std::stoi(selectedItemId);
+                        if (id > 0 && id <= slot.size())
+                        {
+                            std::cout << "You selected item: " << slot[id - 1].getName() << std::endl;
+                            slot[id - 1] -= 1;
+                            if (slot[id - 1].getQuantity() == 0)
+                            {
+                                slot.erase(slot.begin() + id - 1);
+                            }
+                            writeToFile();
+                            readFromFile(); // Update list after purchase
+                            selectedItemId.clear();
+                            selectedId.setString(selectedItemId);
+                        }
+                        else
+                        {
+                            std::cout << "Invalid item ID." << std::endl;
+                        }
+                    }
+                }
+            }
+
+            if (event.type == sf::Event::KeyPressed)
+            {
+                if (event.key.code >= sf::Keyboard::Num0 && event.key.code <= sf::Keyboard::Num9)
+                {
+                    selectedItemId += (event.key.code - sf::Keyboard::Num0) + '0';
+                    selectedId.setString(selectedItemId);
+                }
+                else if (event.key.code == sf::Keyboard::Backspace)
+                {
+                    if (!selectedItemId.empty())
+                    {
+                        selectedItemId.pop_back();
+                        selectedId.setString(selectedItemId);
+                    }
+                }
+                else if (event.key.code == sf::Keyboard::Return)
+                {
+                    int id = std::stoi(selectedItemId);
+                    if (id > 0 && id <= slot.size())
+                    {
+                        std::cout << "You selected item: " << slot[id - 1].getName() << std::endl;
+                        slot[id - 1] -= 1;
+                        if (slot[id - 1].getQuantity() == 0)
+                        {
+                            slot.erase(slot.begin() + id - 1);
+                        }
+                        writeToFile();
+                        readFromFile(); // Update list after purchase
+                        selectedItemId.clear();
+                        selectedId.setString(selectedItemId);
+                    }
+                    else
+                    {
+                        std::cout << "Invalid item ID." << std::endl;
+                    }
+                }
+            }
+        }
+
+        window.clear(sf::Color(30, 30, 30));
+
+        window.draw(title);
+        window.draw(itemGrid);
+        for (const auto& item : itemTexts)
+            window.draw(item);
+        window.draw(prompt);
+        window.draw(selectedId);
+        window.draw(numpadGrid);
+        for (auto& button : numpadButtons)
+            button.draw(window);
+        button0.draw(window);
+        purchaseButton.draw(window);
+
+        window.display();
+    }
 }
 
 int main()
 {
-	cout << "Data loaded";
-	int Code = 1;
-	while (Code != 0)
-	{
-		cout << "Enter any number to start (0 to exit): "; cin >> Code;
-		if (Code == 177013) MaintenanceMode();
-		else if (Code == 0) break;
-		else int x = UserMode();
-	}
+    UserMode();
+
+    return 0;
 }
+
