@@ -25,12 +25,12 @@ public:
         shape.setOutlineThickness(2); // Add outline
         shape.setOutlineColor(sf::Color::Black); // Outline color
     }
-    Button(const std::string& buttonText, const sf::Font& font, unsigned int fontSize, const sf::Vector2f& position, const sf::Color& textColor, const sf::Color& buttonColor,const int width, const int height) {
+    Button(const std::string& buttonText, const sf::Font& font, unsigned int fontSize, const sf::Vector2f& position, const sf::Color& textColor, const sf::Color& buttonColor, int width, int height) {
         text.setString(buttonText);
         text.setFont(font);
         text.setCharacterSize(fontSize);
         text.setFillColor(textColor);
-        text.setPosition(position.x + 40, position.y); // Adjust text position for centering in the button
+        text.setPosition(position.x + 35, position.y + 5); // Adjust text position for centering in the button
 
         shape.setSize(sf::Vector2f(width, height)); // Standard button size
         shape.setFillColor(buttonColor);
@@ -38,6 +38,7 @@ public:
         shape.setOutlineThickness(2); // Add outline
         shape.setOutlineColor(sf::Color::Black); // Outline color
     }
+
     void draw(sf::RenderWindow& window) {
         window.draw(shape);
         window.draw(text);
@@ -118,7 +119,7 @@ void readFromFile() {
     int q;
     double p;
     while (readFile >> n >> p >> q) {
-        slot.emplace_back(n,p,q);
+        slot.emplace_back(n, p, q);
     }
 
     readFile.close();
@@ -133,11 +134,10 @@ void writeToFile() {
 
     writeFile.close();
     slot.clear();
-    std::cout << std::endl;
 }
 
 void UserMode() {
-    sf::RenderWindow window(sf::VideoMode(1024,840), "Vending Machine");
+    sf::RenderWindow window(sf::VideoMode(1024, 1000), "Vending Machine");
 
     sf::Font font;
     if (!font.loadFromFile("game_over.ttf")) {
@@ -146,18 +146,24 @@ void UserMode() {
     }
 
     sf::SoundBuffer clickBuffer;
-    if (!clickBuffer.loadFromFile("click.wav")) {
+    if (!clickBuffer.loadFromFile("blipSelect.wav")) {
         std::cerr << "Failed to load button click sound." << std::endl;
     }
 
+    sf::SoundBuffer purchaseBuffer;
+    if (!purchaseBuffer.loadFromFile("purchase.wav")) {
+        std::cerr << "Failed to load purchase sound." << std::endl;
+    }
+
     sf::Sound clickSound(clickBuffer);
+    sf::Sound purchaseSound(purchaseBuffer);
 
     sf::Text title("VENDING MACHINE", font, 72); // Larger title
-    title.setPosition(300, 50);
+    title.setPosition(400, 10);
     title.setFillColor(sf::Color::Green);
 
     sf::RectangleShape itemGrid(sf::Vector2f(600, 600));
-    itemGrid.setPosition(50, 100);
+    itemGrid.setPosition(50, 120);
     itemGrid.setFillColor(sf::Color(100, 100, 100));
 
     const int rows = 3;
@@ -169,19 +175,15 @@ void UserMode() {
     std::uniform_int_distribution<int> distribution(40, 255); // Range for RGB colors
     for (int i = 0; i < slot.size(); i++) {
         sf::Color bgColor(distribution(generator), distribution(generator), distribution(generator));
-        itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(1+ (i % cols) * itemWidth, 100 + (i / cols) * itemHeight), sf::Color::Black, bgColor,150,90);
+        itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(60 + (i % cols) * itemWidth, 130 + (i / cols) * itemHeight), sf::Color::Black, bgColor,160,90);
     }
 
     sf::Text prompt("Select item ID:", font, 48); // Larger prompt
     prompt.setPosition(700, 200);
     prompt.setFillColor(sf::Color::Yellow);
 
-    sf::Text selectedId("", font, 48); // Larger selected ID text
-    selectedId.setPosition(850, 200);
-    selectedId.setFillColor(sf::Color::Red);
-
     sf::RectangleShape numpadGrid(sf::Vector2f(300, 400));
-    numpadGrid.setPosition(700, 200);
+    numpadGrid.setPosition(700, 300);
     numpadGrid.setFillColor(sf::Color(150, 150, 150));
 
     std::vector<Button> numpadButtons;
@@ -192,7 +194,45 @@ void UserMode() {
     }
 
     Button button0("0", font, 48, sf::Vector2f(700 + buttonWidth, 300 + 3 * buttonHeight), sf::Color::Black, sf::Color::White); // Larger 0 button
-    Button purchaseButton("PURCHASE", font, 48, sf::Vector2f(750, 700), sf::Color::White, sf::Color::Blue,180,90);
+    Button buttonX("X", font, 48, sf::Vector2f(800 + buttonWidth, 300 + 3 * buttonHeight), sf::Color::White, sf::Color::Red);
+    Button buttonQ("?", font, 48, sf::Vector2f(900 + buttonWidth, 300 + 3 * buttonHeight), sf::Color::Black, sf::Color::Yellow);
+    Button purchaseButton("PURCHASE", font, 48, sf::Vector2f(750, 800), sf::Color::White, sf::Color::Green, 180, 90);
+
+    sf::Text collectionTray("COLLECTION TRAY", font, 36); // Collection tray title
+    collectionTray.setPosition(400, 900);
+    collectionTray.setFillColor(sf::Color::White);
+
+    sf::RectangleShape trayShape(sf::Vector2f(600, 80)); // Collection tray shape
+    trayShape.setPosition(50, 920);
+    trayShape.setFillColor(sf::Color(200, 200, 200));
+
+    sf::RectangleShape selectedItemShape(sf::Vector2f(110, 40)); // Selected item ID shape
+    selectedItemShape.setPosition(830, 220);
+    selectedItemShape.setFillColor(sf::Color(30,30,30));
+    selectedItemShape.setOutlineThickness(2);
+    selectedItemShape.setOutlineColor(sf::Color::Black);
+    sf::Font selectedItemFont;
+    if (!selectedItemFont.loadFromFile("digital-7.ttf")) {
+        std::cerr << "Error loading selected item font." << std::endl;
+        return;
+    }
+    sf::RectangleShape popUpWindow(sf::Vector2f(400, 100)); // Pop-up window shape
+    popUpWindow.setPosition(700, 50);
+    popUpWindow.setFillColor(sf::Color(30, 30, 30));
+    popUpWindow.setOutlineThickness(2);
+    popUpWindow.setOutlineColor(sf::Color::Black);
+
+    sf::Text popUpMessage("", selectedItemFont, 35); // Pop-up message text
+    popUpMessage.setPosition(710, 55);
+    popUpMessage.setFillColor(sf::Color::Blue);
+    sf::Text selectedId("", selectedItemFont, 48); // Larger selected ID text
+    selectedId.setPosition(830, 210);
+    selectedId.setFillColor(sf::Color::Blue);
+    sf::Text selectedItemText("", selectedItemFont, 24); // Selected item ID text
+    selectedItemText.setPosition(850, 110);
+    selectedItemText.setFillColor(sf::Color::Black);
+    
+    selectedItemText.setFont(selectedItemFont);
 
     while (window.isOpen()) {
         sf::Event event;
@@ -226,24 +266,48 @@ void UserMode() {
                         selectedId.setString(selectedItemId);
                         clickSound.play();
                     }
+                    if (buttonX.contains(sf::Vector2f(mousePos))) {
+                        if (!selectedItemId.empty()) {
+                            selectedItemId.pop_back();
+                            selectedId.setString(selectedItemId);
+                            clickSound.play();
+                        }
+                    }
+                    if (buttonQ.contains(sf::Vector2f(mousePos))) {
+                        
+                    }
 
                     if (purchaseButton.contains(sf::Vector2f(mousePos))) {
                         int id = std::stoi(selectedItemId);
                         if (id > 0 && id <= slot.size()) {
-                            std::cout << "You selected item: " << slot[id - 1].getName() << std::endl;
+                            std::string purchasedItem = slot[id - 1].getName();
+                            std::cout << "You selected item: " << purchasedItem << std::endl;
+
                             slot[id - 1] -= 1;
                             if (slot[id - 1].getQuantity() == 0) {
                                 slot.erase(slot.begin() + id - 1);
+                                itemButtons.clear(); // Clear item buttons
+                                for (int i = 0; i < slot.size(); i++) { // Recreate item buttons
+                                    sf::Color bgColor(distribution(generator), distribution(generator), distribution(generator));
+                                    itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(60 + (i % cols) * itemWidth, 130 + (i / cols) * itemHeight), sf::Color::Black, bgColor);
+                                }
                             }
                             writeToFile();
                             readFromFile(); // Update list after purchase
                             selectedItemId.clear();
                             selectedId.setString(selectedItemId);
+
+                            // Display pop-up window for purchase
+                            popUpMessage.setString("You purchased:\n\n" + purchasedItem);
+                            purchaseSound.play();
                         }
                         else {
-                            std::cout << "Invalid item ID." << std::endl;
+                            popUpMessage.setString("Invalid item ID");
+                            popUpMessage.setPosition(710, 55); // Reset message position for pop-up
                         }
-                        clickSound.play();
+
+                        // Show pop-up window
+                        popUpWindow.setPosition(700, 50);
                     }
                 }
             }
@@ -259,42 +323,34 @@ void UserMode() {
                         selectedItemId.pop_back();
                         selectedId.setString(selectedItemId);
                     }
-                }
-                else if (event.key.code == sf::Keyboard::Return) {
-                    int id = std::stoi(selectedItemId);
-                    if (id > 0 && id <= slot.size()) {
-                        std::cout << "You selected item: " << slot[id - 1].getName() << std::endl;
-                        slot[id - 1] -= 1;
-                        if (slot[id - 1].getQuantity() == 0) {
-                            slot.erase(slot.begin() + id - 1);
-                        }
-                        writeToFile();
-                        readFromFile(); // Update list after purchase
-                        selectedItemId.clear();
-                        selectedId.setString(selectedItemId);
-                    }
-                    else {
-                        std::cout << "Invalid item ID." << std::endl;
-                    }
-                    clickSound.play();
+            
                 }
             }
         }
 
-        window.clear(sf::Color(30, 30, 30));
-        window.draw(numpadGrid);
+        window.clear(sf::Color(0, 0, 0));
 
+        // Draw UI elements
         window.draw(title);
         window.draw(itemGrid);
- 
         window.draw(prompt);
-        window.draw(selectedId);
         for (auto& button : numpadButtons)
             button.draw(window);
         button0.draw(window);
+        buttonX.draw(window);
         purchaseButton.draw(window);
         for (auto& button : itemButtons)
             button.draw(window);
+        window.draw(collectionTray);
+        window.draw(trayShape);
+        window.draw(selectedItemShape);
+        window.draw(selectedItemText);
+        window.draw(selectedId);
+
+        // Draw pop-up window if necessary
+        if (popUpWindow.getPosition().y < 1000)
+            window.draw(popUpWindow);
+        window.draw(popUpMessage);
 
         window.display();
     }
