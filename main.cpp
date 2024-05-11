@@ -1,106 +1,105 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <iomanip>
+#include <random>
 
-class Button
-{
+class Button {
 private:
-    sf::RectangleShape shape;
     sf::Text text;
+    sf::RectangleShape shape;
 
 public:
-    Button(sf::Font& font, const std::string& buttonText, unsigned int textSize, const sf::Vector2f& size, const sf::Vector2f& position)
-    {
-        shape.setSize(size);
-        shape.setPosition(position);
-        shape.setFillColor(sf::Color::White);
-        shape.setOutlineThickness(2);
-        shape.setOutlineColor(sf::Color::Black);
-
+    Button(const std::string& buttonText, const sf::Font& font, unsigned int fontSize, const sf::Vector2f& position, const sf::Color& textColor, const sf::Color& buttonColor) {
         text.setString(buttonText);
         text.setFont(font);
-        text.setCharacterSize(textSize);
-        text.setFillColor(sf::Color::Black);
+        text.setCharacterSize(fontSize);
+        text.setFillColor(textColor);
+        text.setPosition(position.x + 35, position.y + 5); // Adjust text position for centering in the button
 
-        sf::FloatRect textRect = text.getLocalBounds();
-        text.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
-        text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+        shape.setSize(sf::Vector2f(90, 90)); // Standard button size
+        shape.setFillColor(buttonColor);
+        shape.setPosition(position);
+        shape.setOutlineThickness(2); // Add outline
+        shape.setOutlineColor(sf::Color::Black); // Outline color
     }
+    Button(const std::string& buttonText, const sf::Font& font, unsigned int fontSize, const sf::Vector2f& position, const sf::Color& textColor, const sf::Color& buttonColor,const int width, const int height) {
+        text.setString(buttonText);
+        text.setFont(font);
+        text.setCharacterSize(fontSize);
+        text.setFillColor(textColor);
+        text.setPosition(position.x + 40, position.y); // Adjust text position for centering in the button
 
-    bool contains(const sf::Vector2f& point) const
-    {
-        return shape.getGlobalBounds().contains(point);
+        shape.setSize(sf::Vector2f(width, height)); // Standard button size
+        shape.setFillColor(buttonColor);
+        shape.setPosition(position);
+        shape.setOutlineThickness(2); // Add outline
+        shape.setOutlineColor(sf::Color::Black); // Outline color
     }
-
-    void draw(sf::RenderWindow& window)
-    {
+    void draw(sf::RenderWindow& window) {
         window.draw(shape);
         window.draw(text);
     }
+
+    bool contains(const sf::Vector2f& point) const {
+        return shape.getGlobalBounds().contains(point);
+    }
+
+    std::string getText() const {
+        return text.getString();
+    }
 };
 
-class VendingMachineSlot
-{
+class VendingMachineSlot {
 private:
     std::string name;
     int quantity;
     double price;
 
 public:
-    VendingMachineSlot()
-    {
+    VendingMachineSlot() {
         name = "Empty";
         quantity = 0;
         price = 0.0;
     }
 
-    VendingMachineSlot(std::string name, int quantity, double price)
-    {
+    VendingMachineSlot(std::string name, int quantity, double price) {
         this->name = name;
         this->quantity = quantity;
         this->price = price;
     }
 
-    std::string getName() const
-    {
+    std::string getName() const {
         return name;
     }
 
-    int getQuantity() const
-    {
+    int getQuantity() const {
         return quantity;
     }
 
-    double getPrice() const
-    {
+    double getPrice() const {
         return price;
     }
 
-    void setName(const std::string& name)
-    {
+    void setName(const std::string& name) {
         this->name = name;
     }
 
-    void setQuantity(int quantity)
-    {
+    void setQuantity(int quantity) {
         this->quantity = quantity;
     }
 
-    void setPrice(double price)
-    {
+    void setPrice(double price) {
         this->price = price;
     }
 
-    void operator+=(int x)
-    {
+    void operator+=(int x) {
         quantity += x;
     }
 
-    void operator-=(int x)
-    {
+    void operator-=(int x) {
         quantity -= x;
     }
 };
@@ -108,47 +107,37 @@ public:
 std::vector<VendingMachineSlot> slot;
 std::string selectedItemId = "";
 
-void readFromFile()
-{
+void readFromFile() {
     std::ifstream readFile("Vending Machine Data.txt");
-    if (!readFile.is_open())
-    {
+    if (!readFile.is_open()) {
         std::cerr << "Error reading file." << std::endl << "Exiting...";
         exit(1);
     }
 
-    slot.clear();
-
     std::string n;
     int q;
     double p;
-    while (readFile >> n >> p >> q)
-    {
-        VendingMachineSlot temp;
-        temp.setName(n);
-        temp.setPrice(p);
-        temp.setQuantity(q);
-        slot.push_back(temp);
+    while (readFile >> n >> p >> q) {
+        slot.emplace_back(n,p,q);
     }
 
     readFile.close();
 }
 
-void writeToFile()
-{
+void writeToFile() {
     std::ofstream writeFile;
     writeFile.open("Vending Machine Data.txt");
-    for (int i = 0; i < slot.size(); i++)
-    {
+    for (int i = 0; i < slot.size(); i++) {
         writeFile << slot[i].getName() << std::endl << slot[i].getPrice() << std::endl << slot[i].getQuantity() << std::endl;
     }
 
     writeFile.close();
+    slot.clear();
+    std::cout << std::endl;
 }
 
-void UserMode()
-{
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Vending Machine");
+void UserMode() {
+    sf::RenderWindow window(sf::VideoMode(1024,840), "Vending Machine");
 
     sf::Font font;
     if (!font.loadFromFile("game_over.ttf")) {
@@ -156,98 +145,94 @@ void UserMode()
         return;
     }
 
-    readFromFile();
+    sf::SoundBuffer clickBuffer;
+    if (!clickBuffer.loadFromFile("click.wav")) {
+        std::cerr << "Failed to load button click sound." << std::endl;
+    }
 
-    sf::Text title("VENDING MACHINE", font, 48);
-    title.setPosition(200, 50);
+    sf::Sound clickSound(clickBuffer);
+
+    sf::Text title("VENDING MACHINE", font, 72); // Larger title
+    title.setPosition(300, 50);
     title.setFillColor(sf::Color::Green);
 
-    sf::RectangleShape itemGrid(sf::Vector2f(400, 400));
+    sf::RectangleShape itemGrid(sf::Vector2f(600, 600));
     itemGrid.setPosition(50, 100);
     itemGrid.setFillColor(sf::Color(100, 100, 100));
 
     const int rows = 3;
     const int cols = 3;
-    std::vector<sf::Text> itemTexts;
+    std::vector<Button> itemButtons;
     int itemWidth = itemGrid.getSize().x / cols;
     int itemHeight = itemGrid.getSize().y / rows;
-    for (int i = 0; i < slot.size(); i++)
-    {
-        std::string itemInfo = std::to_string(i + 1) + " " + slot[i].getName() + " ($" + std::to_string(slot[i].getPrice()) + ")";
-        sf::Text item(itemInfo, font, 24);
-        item.setPosition(50 + (i % cols) * itemWidth, 100 + (i / cols) * itemHeight);
-        item.setFillColor(sf::Color::White);
-        itemTexts.push_back(item);
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(40, 255); // Range for RGB colors
+    for (int i = 0; i < slot.size(); i++) {
+        sf::Color bgColor(distribution(generator), distribution(generator), distribution(generator));
+        itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(1+ (i % cols) * itemWidth, 100 + (i / cols) * itemHeight), sf::Color::Black, bgColor,150,90);
     }
 
-    sf::Text prompt("Select item ID:", font, 30);
-    prompt.setPosition(100, 520);
+    sf::Text prompt("Select item ID:", font, 48); // Larger prompt
+    prompt.setPosition(700, 200);
     prompt.setFillColor(sf::Color::Yellow);
 
-    sf::Text selectedId("", font, 30);
-    selectedId.setPosition(350, 520);
+    sf::Text selectedId("", font, 48); // Larger selected ID text
+    selectedId.setPosition(850, 200);
     selectedId.setFillColor(sf::Color::Red);
 
-    sf::RectangleShape numpadGrid(sf::Vector2f(300, 300));
-    numpadGrid.setPosition(500, 100);
+    sf::RectangleShape numpadGrid(sf::Vector2f(300, 400));
+    numpadGrid.setPosition(700, 200);
     numpadGrid.setFillColor(sf::Color(150, 150, 150));
 
     std::vector<Button> numpadButtons;
-    int buttonSize = 80;
-    int buttonPadding = 10;
-    for (int i = 1; i <= 9; i++)
-    {
-        int col = (i - 1) % 3;
-        int row = (i - 1) / 3;
-        sf::Vector2f buttonPos(500 + col * (buttonSize + buttonPadding), 100 + row * (buttonSize + buttonPadding));
-        Button button(font, std::to_string(i), 24, sf::Vector2f(buttonSize, buttonSize), buttonPos);
-        numpadButtons.push_back(button);
+    int buttonWidth = numpadGrid.getSize().x / 3;
+    int buttonHeight = numpadGrid.getSize().y / 4;
+    for (int i = 1; i <= 9; i++) {
+        numpadButtons.emplace_back(std::to_string(i), font, 48, sf::Vector2f(700 + (i - 1) % 3 * buttonWidth, 300 + (i - 1) / 3 * buttonHeight), sf::Color::Black, sf::Color::White); // Larger numpad buttons
     }
 
-    sf::Vector2f zeroButtonPos(500 + buttonSize + buttonPadding, 100 + 3 * (buttonSize + buttonPadding));
-    Button button0(font, "0", 24, sf::Vector2f(buttonSize, buttonSize), zeroButtonPos);
+    Button button0("0", font, 48, sf::Vector2f(700 + buttonWidth, 300 + 3 * buttonHeight), sf::Color::Black, sf::Color::White); // Larger 0 button
+    Button purchaseButton("PURCHASE", font, 48, sf::Vector2f(750, 700), sf::Color::White, sf::Color::Blue,180,90);
 
-    sf::Vector2f purchaseButtonPos(600, 500);
-    Button purchaseButton(font, "PURCHASE", 30, sf::Vector2f(150, 50), purchaseButtonPos);
-
-    while (window.isOpen())
-    {
+    while (window.isOpen()) {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
+        while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
 
-            if (event.type == sf::Event::MouseButtonPressed)
-            {
-                if (event.mouseButton.button == sf::Mouse::Left)
-                {
+            if (event.type == sf::Event::MouseButtonPressed) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                    for (int i = 0; i < numpadButtons.size(); i++)
-                    {
-                        if (numpadButtons[i].contains(sf::Vector2f(mousePos)))
-                        {
-                            selectedItemId += std::to_string(i + 1);
+                    for (auto& button : itemButtons) {
+                        if (button.contains(sf::Vector2f(mousePos))) {
+                            selectedItemId = button.getText();
                             selectedId.setString(selectedItemId);
+                            clickSound.play();
                             break;
                         }
                     }
 
-                    if (button0.contains(sf::Vector2f(mousePos)))
-                    {
-                        selectedItemId += "0";
-                        selectedId.setString(selectedItemId);
+                    for (auto& button : numpadButtons) {
+                        if (button.contains(sf::Vector2f(mousePos))) {
+                            selectedItemId += button.getText();
+                            selectedId.setString(selectedItemId);
+                            clickSound.play();
+                            break;
+                        }
                     }
 
-                    if (purchaseButton.contains(sf::Vector2f(mousePos)))
-                    {
+                    if (button0.contains(sf::Vector2f(mousePos))) {
+                        selectedItemId += "0";
+                        selectedId.setString(selectedItemId);
+                        clickSound.play();
+                    }
+
+                    if (purchaseButton.contains(sf::Vector2f(mousePos))) {
                         int id = std::stoi(selectedItemId);
-                        if (id > 0 && id <= slot.size())
-                        {
+                        if (id > 0 && id <= slot.size()) {
                             std::cout << "You selected item: " << slot[id - 1].getName() << std::endl;
                             slot[id - 1] -= 1;
-                            if (slot[id - 1].getQuantity() == 0)
-                            {
+                            if (slot[id - 1].getQuantity() == 0) {
                                 slot.erase(slot.begin() + id - 1);
                             }
                             writeToFile();
@@ -255,38 +240,32 @@ void UserMode()
                             selectedItemId.clear();
                             selectedId.setString(selectedItemId);
                         }
-                        else
-                        {
+                        else {
                             std::cout << "Invalid item ID." << std::endl;
                         }
+                        clickSound.play();
                     }
                 }
             }
 
-            if (event.type == sf::Event::KeyPressed)
-            {
-                if (event.key.code >= sf::Keyboard::Num0 && event.key.code <= sf::Keyboard::Num9)
-                {
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code >= sf::Keyboard::Num0 && event.key.code <= sf::Keyboard::Num9) {
                     selectedItemId += (event.key.code - sf::Keyboard::Num0) + '0';
                     selectedId.setString(selectedItemId);
+                    clickSound.play();
                 }
-                else if (event.key.code == sf::Keyboard::Backspace)
-                {
-                    if (!selectedItemId.empty())
-                    {
+                else if (event.key.code == sf::Keyboard::Backspace) {
+                    if (!selectedItemId.empty()) {
                         selectedItemId.pop_back();
                         selectedId.setString(selectedItemId);
                     }
                 }
-                else if (event.key.code == sf::Keyboard::Return)
-                {
+                else if (event.key.code == sf::Keyboard::Return) {
                     int id = std::stoi(selectedItemId);
-                    if (id > 0 && id <= slot.size())
-                    {
+                    if (id > 0 && id <= slot.size()) {
                         std::cout << "You selected item: " << slot[id - 1].getName() << std::endl;
                         slot[id - 1] -= 1;
-                        if (slot[id - 1].getQuantity() == 0)
-                        {
+                        if (slot[id - 1].getQuantity() == 0) {
                             slot.erase(slot.begin() + id - 1);
                         }
                         writeToFile();
@@ -294,36 +273,35 @@ void UserMode()
                         selectedItemId.clear();
                         selectedId.setString(selectedItemId);
                     }
-                    else
-                    {
+                    else {
                         std::cout << "Invalid item ID." << std::endl;
                     }
+                    clickSound.play();
                 }
             }
         }
 
         window.clear(sf::Color(30, 30, 30));
+        window.draw(numpadGrid);
 
         window.draw(title);
         window.draw(itemGrid);
-        for (const auto& item : itemTexts)
-            window.draw(item);
+ 
         window.draw(prompt);
         window.draw(selectedId);
-        window.draw(numpadGrid);
         for (auto& button : numpadButtons)
             button.draw(window);
         button0.draw(window);
         purchaseButton.draw(window);
+        for (auto& button : itemButtons)
+            button.draw(window);
 
         window.display();
     }
 }
 
-int main()
-{
+int main() {
+    readFromFile();
     UserMode();
-
     return 0;
 }
-
