@@ -202,7 +202,7 @@ void UserMode() {
     int buttonWidth = numpadGrid.getSize().x / 3;
     int buttonHeight = numpadGrid.getSize().y / 4;
     for (int i = 1; i <= 9; i++) {
-        numpadButtons.emplace_back(std::to_string(i+1), font, 48, sf::Vector2f(700 + (i - 1) % 3 * buttonWidth, 300 + (i - 1) / 3 * buttonHeight), sf::Color::Black, sf::Color::White); // Larger numpad buttons
+        numpadButtons.emplace_back(std::to_string(i), font, 48, sf::Vector2f(700 + (i - 1) % 3 * buttonWidth, 300 + (i - 1) / 3 * buttonHeight), sf::Color::Black, sf::Color::White); // Larger numpad buttons
     }
 
     Button button0("0", font, 48, sf::Vector2f(700 + buttonWidth, 300 + 3 * buttonHeight), sf::Color::Black, sf::Color::White); // Larger 0 button
@@ -302,7 +302,7 @@ void UserMode() {
                                 itemButtons.clear(); // Clear item buttons
                                 for (int i = 0; i < slot.size(); i++) { // Recreate item buttons
                                     sf::Color bgColor(distribution(generator), distribution(generator), distribution(generator));
-                                    itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(60 + (i % cols) * itemWidth, 130 + (i / cols) * itemHeight), sf::Color::Black, bgColor);
+                                    itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(60 + (i % cols) * itemWidth, 130 + (i / cols) * itemHeight), sf::Color::Black, bgColor,100,90,0,90);
                                 }
                             }
                             writeToFile();
