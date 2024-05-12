@@ -178,7 +178,7 @@ void UserMode() {
     title.setPosition(400, 2);
     title.setFillColor(sf::Color::White);
 
-    sf::RectangleShape itemGrid(sf::Vector2f(600, 750));
+    sf::RectangleShape itemGrid(sf::Vector2f(600, 752));
     itemGrid.setPosition(50, 120);
     itemGrid.setFillColor(sf::Color(100, 100, 100));
 
@@ -202,8 +202,9 @@ void UserMode() {
     int buttonWidth = numpadGrid.getSize().x / 3;
     int buttonHeight = numpadGrid.getSize().y / 4;
     for (int i = 1; i <= 9; i++) {
-        numpadButtons.emplace_back(std::to_string(i), font, 48, sf::Vector2f(700 + (i - 1) % 3 * buttonWidth, 300 + (i - 1) / 3 * buttonHeight), sf::Color::Black, sf::Color::White); // Larger numpad buttons
+        numpadButtons.emplace_back(std::to_string(i), font, 48, sf::Vector2f(700 + ((i - 1) % 3) * buttonWidth, 300 + ((i - 1) / 3) * buttonHeight), sf::Color::Black, sf::Color::White); // Larger numpad buttons
     }
+
 
     Button button0("0", font, 48, sf::Vector2f(700 + buttonWidth, 300 + 3 * buttonHeight), sf::Color::Black, sf::Color::White); // Larger 0 button
     Button buttonX("X", font, 48, sf::Vector2f(800 + buttonWidth, 300 + 3 * buttonHeight), sf::Color::White, sf::Color::Red);
@@ -302,7 +303,7 @@ void UserMode() {
                                 itemButtons.clear(); // Clear item buttons
                                 for (int i = 0; i < slot.size(); i++) { // Recreate item buttons
                                     sf::Color bgColor(distribution(generator), distribution(generator), distribution(generator));
-                                    itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(60 + (i % cols) * itemWidth, 130 + (i / cols) * itemHeight), sf::Color::Black, bgColor,100,90,0,90);
+                                    itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(60 + (i % cols) * itemWidth, 130 + (i / cols) * itemHeight), sf::Color::Black, bgColor);
                                 }
                             }
                             writeToFile();
@@ -368,9 +369,47 @@ void UserMode() {
         window.display();
     }
 }
+void MaintenanceMode() {
+    // Maintenance mode implementation...
+    std::string productName;
+    double productPrice;
+    int productStock;
+
+    std::cout << "Enter product name: ";
+    std::cin >> productName;
+    std::cout << "Enter product price: ";
+    std::cin >> productPrice;
+    std::cout << "Enter product stock: ";
+    std::cin >> productStock;
+
+    // Add the new item to the slot vector
+    slot.emplace_back(productName, productPrice, productStock);
+    writeToFile(); // Update the file
+}
 
 int main() {
     readFromFile();
-    UserMode();
+
+    int choice;
+    bool exitRequested = false;
+    while (!exitRequested) {
+        std::cout << "Press 0 to exit, any other number for user mode, or 177 for maintenance mode: ";
+        std::cin >> choice;
+
+        switch (choice) {
+            case 0:
+                exitRequested = true;
+            break;
+            case 177:
+                MaintenanceMode();
+            // After maintenance mode, reload data from file
+            readFromFile();
+            break;
+            default:
+                UserMode();
+            break;
+        }
+    }
+
     return 0;
 }
