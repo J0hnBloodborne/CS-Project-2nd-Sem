@@ -1,3 +1,6 @@
+//2023494
+//2023495
+
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
@@ -215,7 +218,7 @@ void UserMode() { // Main GUI Code
     std::uniform_int_distribution<int> distribution(40, 255); // Range for RGB colors
     for (int i = 0; i < slot.size(); i++) {
         sf::Color bgColor(distribution(generator), distribution(generator), distribution(generator));
-        itemButtons.emplace_back(std::to_string(i+1) + " -  " + slot[i].getName(), font, 36, sf::Vector2f(100 + (i % cols) * itemWidth, 150 + (i / cols) * itemHeight), sf::Color::White, bgColor, 50, 50, 0, 90);
+        itemButtons.emplace_back(std::to_string(i+1) + " -  " + slot[i].getName(), font, 36, sf::Vector2f(100 + (i % cols) * itemWidth, 140 + (i / cols) * itemHeight * 0.9), sf::Color::White, bgColor, 50, 50, 0, 40);
     }
 
     // Numpad Shape
@@ -317,7 +320,7 @@ void UserMode() { // Main GUI Code
                                 itemButtons.clear(); // Clear item buttons
                                 for (int i = 0; i < slot.size(); i++) { // Recreate item buttons
                                     sf::Color bgColor(distribution(generator), distribution(generator), distribution(generator));
-                                    itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(100 + (i % cols) * itemWidth, 150 + (i / cols) * itemHeight), sf::Color::White, bgColor,50,50,0,90);
+                                    itemButtons.emplace_back(std::to_string(i) + "   " + slot[i].getName(), font, 36, sf::Vector2f(100 + (i % cols) * itemWidth, 140 + (i / cols) * itemHeight * 0.9), sf::Color::White, bgColor,50,50,0,90);
                                 }
                             }
                             writeToFile();
